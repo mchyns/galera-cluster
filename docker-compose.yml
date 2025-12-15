@@ -1,0 +1,153 @@
+version: '3.8'
+
+services:
+  # MariaDB Galera Node 1
+  mariadb-node1:
+    image: mariadb:10.11
+    container_name: mariadb-node1
+    hostname: mariadb-node1
+    environment:
+      MYSQL_ROOT_PASSWORD: "030105"
+      MYSQL_DATABASE: beauty
+      MYSQL_USER: beauty_user
+      MYSQL_PASSWORD: "030105"
+    command: >
+      --wsrep-new-cluster
+      --wsrep-on=ON
+      --wsrep-provider=/usr/lib/galera/libgalera_smm.so
+      --wsrep-cluster-name=galera_cluster
+      --wsrep-cluster-address=gcomm://mariadb-node1,mariadb-node2,mariadb-node3
+      --wsrep-node-address=mariadb-node1
+      --wsrep-node-name=mariadb-node1
+      --wsrep-sst-method=rsync
+      --binlog-format=row
+      --default-storage-engine=InnoDB
+      --innodb-autoinc-lock-mode=2
+      --bind-address=0.0.0.0
+    networks:
+      - galera-network
+    volumes:
+      - mariadb-node1-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p030105"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MariaDB Galera Node 2
+  mariadb-node2:
+    image: mariadb:10.11
+    container_name: mariadb-node2
+    hostname: mariadb-node2
+    environment:
+      MYSQL_ROOT_PASSWORD: "030105"
+      MYSQL_DATABASE: beauty
+      MYSQL_USER: beauty_user
+      MYSQL_PASSWORD: "030105"
+    command: >
+      --wsrep-on=ON
+      --wsrep-provider=/usr/lib/galera/libgalera_smm.so
+      --wsrep-cluster-name=galera_cluster
+      --wsrep-cluster-address=gcomm://mariadb-node1,mariadb-node2,mariadb-node3
+      --wsrep-node-address=mariadb-node2
+      --wsrep-node-name=mariadb-node2
+      --wsrep-sst-method=rsync
+      --binlog-format=row
+      --default-storage-engine=InnoDB
+      --innodb-autoinc-lock-mode=2
+      --bind-address=0.0.0.0
+    networks:
+      - galera-network
+    volumes:
+      - mariadb-node2-data:/var/lib/mysql
+    depends_on:
+      mariadb-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p030105"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MariaDB Galera Node 3
+  mariadb-node3:
+    image: mariadb:10.11
+    container_name: mariadb-node3
+    hostname: mariadb-node3
+    environment:
+      MYSQL_ROOT_PASSWORD: "030105"
+      MYSQL_DATABASE: beauty
+      MYSQL_USER: beauty_user
+      MYSQL_PASSWORD: "030105"
+    command: >
+      --wsrep-on=ON
+      --wsrep-provider=/usr/lib/galera/libgalera_smm.so
+      --wsrep-cluster-name=galera_cluster
+      --wsrep-cluster-address=gcomm://mariadb-node1,mariadb-node2,mariadb-node3
+      --wsrep-node-address=mariadb-node3
+      --wsrep-node-name=mariadb-node3
+      --wsrep-sst-method=rsync
+      --binlog-format=row
+      --default-storage-engine=InnoDB
+      --innodb-autoinc-lock-mode=2
+      --bind-address=0.0.0.0
+    networks:
+      - galera-network
+    volumes:
+      - mariadb-node3-data:/var/lib/mysql
+    depends_on:
+      mariadb-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p030105"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # HAProxy Load Balancer
+  haproxy:
+    image: haproxy:2.8-alpine
+    container_name: haproxy
+    hostname: haproxy
+    ports:
+      - "3300:3306"  # HAProxy MySQL port mapped to host 3300
+      - "8404:8404"  # HAProxy Stats Page
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    networks:
+      - galera-network
+    depends_on:
+      - mariadb-node1
+      - mariadb-node2
+      - mariadb-node3
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3306"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # PHPMyAdmin - GUI untuk Database
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: haproxy
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: "030105"
+      MYSQL_ROOT_PASSWORD: "030105"
+    networks:
+      - galera-network
+    depends_on:
+      - haproxy
+
+networks:
+  galera-network:
+    driver: bridge
+
+volumes:
+  mariadb-node1-data:
+  mariadb-node2-data:
+  mariadb-node3-data:
