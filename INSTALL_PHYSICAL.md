@@ -32,8 +32,15 @@ sudo apt update && sudo apt upgrade -y
 ```
 
 ### 1.2 Install MariaDB Server + Galera
+
+**Untuk Ubuntu/Debian:**
 ```bash
 sudo apt install -y mariadb-server mariadb-backup galera-4 rsync
+```
+
+**Untuk Fedora/RHEL:**
+```bash
+sudo dnf install -y mariadb-server galera rsync
 ```
 
 ### 1.3 Stop MariaDB (biar nggak bentrok saat config)
@@ -52,8 +59,15 @@ hostname -I
 ## ⚙️ STEP 2: Konfigurasi Galera di SETIAP Laptop
 
 ### 2.1 Buka File Konfigurasi
+
+**Untuk Ubuntu/Debian:**
 ```bash
 sudo nano /etc/mysql/mariadb.conf.d/60-galera.cnf
+```
+
+**Untuk Fedora/RHEL:**
+```bash
+sudo nano /etc/my.cnf.d/galera.cnf
 ```
 
 ### 2.2 Isi Konfigurasi

@@ -25,7 +25,8 @@ services:
       --innodb-autoinc-lock-mode=2
       --bind-address=0.0.0.0
     networks:
-      - galera-network
+      galera-network:
+        ipv4_address: 172.19.0.2
     volumes:
       - mariadb-node1-data:/var/lib/mysql
     healthcheck:
@@ -57,7 +58,8 @@ services:
       --innodb-autoinc-lock-mode=2
       --bind-address=0.0.0.0
     networks:
-      - galera-network
+      galera-network:
+        ipv4_address: 172.19.0.3
     volumes:
       - mariadb-node2-data:/var/lib/mysql
     depends_on:
@@ -92,7 +94,8 @@ services:
       --innodb-autoinc-lock-mode=2
       --bind-address=0.0.0.0
     networks:
-      - galera-network
+      galera-network:
+        ipv4_address: 172.19.0.4
     volumes:
       - mariadb-node3-data:/var/lib/mysql
     depends_on:
@@ -146,6 +149,9 @@ services:
 networks:
   galera-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
 
 volumes:
   mariadb-node1-data:
