@@ -8,7 +8,7 @@ app.secret_key = 'your-secret-key-change-in-production'
 # Database Configuration - Connect to HAProxy
 DB_CONFIG = {
     'host': '127.0.0.1',
-    'port': 3300,
+    'port': 3307,  # HAProxy MySQL port (2 nodes: fedora + ubuntu)
     'user': 'root',
     'password': '030105',
     'database': 'beauty'
